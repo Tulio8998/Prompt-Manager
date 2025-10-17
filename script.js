@@ -67,7 +67,7 @@ elements.btnNew.addEventListener('click', () => {
 
 elements.btnSave.addEventListener('click', () => {
   const title = elements.promptTitle.textContent.trim();
-  const content = elements.promptContent.innerHTML.trim();
+  const content = elements.promptContent.textContent.trim();
   const hasContent = elements.promptContent.textContent.trim();
 
   if (!title || !hasContent) {
@@ -82,7 +82,7 @@ elements.btnSave.addEventListener('click', () => {
       promptToUpdate.content = content;
     }
   } else {
-    const newPrompt = { id: Date.now(), title, content, response: '' }; // <--- ADICIONE AQUI
+    const newPrompt = { id: Date.now(), title, content, response: '' };
     state.prompts.unshift(newPrompt);
     state.selectedId = newPrompt.id;
   }
@@ -175,37 +175,41 @@ elements.searchInput.addEventListener('input', (event) => {
 
 elements.list.addEventListener('click', (event) => {
   const removeBtn = event.target.closest('[data-remove="remove"]');
-  const item = event.target.closest('[data-id]');
-
-  if (!item) return;
-
-  const id = Number(item.getAttribute('data-id'));
+  const selectAction = event.target.closest('[data-action="select"]');
 
   if (removeBtn) {
+    const item = removeBtn.closest('[data-id]');
+    const id = Number(item.getAttribute('data-id'));
+    
     state.prompts = state.prompts.filter(p => p.id !== id);
 
-    if (prompt) {
-      elements.promptTitle.textContent = prompt.title;
-      elements.promptContent.innerHTML = prompt.content;
-      const htmlResponse = converter.makeHtml(prompt.response || '');
-      elements.aiResponse.innerHTML = htmlResponse;
-      state.selectedId = prompt.id;
+    if (state.selectedId === id) {
+      elements.promptTitle.textContent = '';
+      elements.promptContent.innerHTML = '';
+      elements.aiResponse.innerHTML = '';
+      state.selectedId = null;
       updateAllEditableStates();
     }
 
-    renderList(elements.searchInput.value);
     persist();
-    return;
-  }
-
-  if (event.target.closest('[data-action="select"]')) {
+    renderList(elements.searchInput.value);
+    
+  } else if (selectAction) {
+    const item = selectAction.closest('[data-id]');
+    const id = Number(item.getAttribute('data-id'));
     const prompt = state.prompts.find(p => p.id === id);
 
     if (prompt) {
       elements.promptTitle.textContent = prompt.title;
       elements.promptContent.innerHTML = prompt.content;
+      
+      
+      const htmlResponse = converter.makeHtml(prompt.response || '');
+      elements.aiResponse.innerHTML = htmlResponse;
+      
       state.selectedId = prompt.id;
       updateAllEditableStates();
+      renderList(elements.searchInput.value);
     }
   }
 });
